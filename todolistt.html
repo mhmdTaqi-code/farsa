@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team To-Do List</title>
+    <style>
+        /* CSS code goes here */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: #f8f8f8;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        li button {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        li button:hover {
+            background-color: #c82333;
+        }
+        #c{
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>قائمه مهام فريق فرصه</h1>
+        <form id="task-form">
+            <input type="text" id="task-input" placeholder="قم باضافه مهمه واصنع فرصه" required>
+            <button type="submit">اضافه مهمه</button>
+        </form>
+        <ul id="task-list"></ul>
+    </div>
+
+    <script type="module">
+        // Import the Firebase modules you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDibxWEj1SbUwAJR9T1oWCwHWTUBxoy-uI",
+            authDomain: "todolist-abfd2.firebaseapp.com",
+            projectId: "todolist-abfd2",
+            storageBucket: "todolist-abfd2.appspot.com",
+            messagingSenderId: "188826996427",
+            appId: "1:188826996427:web:862f2b300db73c2393154e",
+            measurementId: "G-H0MB058MC9",
+            databaseURL: "https://todolist-abfd2-default-rtdb.firebaseio.com/"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const analytics = getAnalytics(app);
+
+        // DOM Elements
+        const taskForm = document.getElementById('task-form');
+        const taskInput = document.getElementById('task-input');
+        const taskList = document.getElementById('task-list');
+
+        // Load tasks from Firebase
+        const tasksRef = ref(db, 'tasks');
+        onValue(tasksRef, (snapshot) => {
+            taskList.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const task = childSnapshot.val();
+                const li = document.createElement('li');
+                li.className = task.completed ? 'completed' : '';
+                li.innerHTML = `
+                    ${task.name}
+                    <div>
+                        <button id="c" onclick="toggleTask('${childSnapshot.key}')">تم</button>
+                        <button onclick="deleteTask('${childSnapshot.key}')">حذف</button>
+                    </div>
+                `;
+                taskList.appendChild(li);
+            });
+        });
+
+        // Add new task
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const taskName = taskInput.value;
+            push(tasksRef, { name: taskName, completed: false });
+            taskInput.value = '';
+        });
+
+        // Toggle task completion
+        window.toggleTask = (taskId) => {
+            const taskRef = ref(db, `tasks/${taskId}`);
+            onValue(taskRef, (snapshot) => {
+                const task = snapshot.val();
+                update(taskRef, { completed: !task.completed });
+            }, {
+                onlyOnce: true
+            });
+        };
+
+        // Delete task
+        window.deleteTask = (taskId) => {
+            const taskRef = ref(db, `tasks/${taskId}`);
+            remove(taskRef);
+        };
+    </script>
+</body>
+</html>
